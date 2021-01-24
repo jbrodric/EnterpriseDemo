@@ -1,0 +1,33 @@
+<template>
+    <div class={formElementClass}>
+        <label class="slds-form-element__label" for="datatable">
+            <div class="slds-media slds-media_small">
+                <abbr class="slds-required" title="required">{requiredSymbol}</abbr>
+                <div class="slds-media__figure">
+                    <template if:true={hasIcon}>
+                        <lightning-icon icon-name={tableIcon} alternative-text="Datatable Icon" title="Icon"
+                            size="small"></lightning-icon>
+                    </template>
+                </div>
+                <div class="slds-media__body">
+                    <template if:true={hasTableLabel}>
+                        <lightning-formatted-rich-text value={formattedTableLabel}>
+                        </lightning-formatted-rich-text>
+                    </template>
+                </div>
+                <div class="slds-media__figure slds-media__figure_reverse">
+                    <template if:true={hasHelpText}>
+                        <lightning-icon icon-name="utility:info" alternative-text="Help Text" title={helpText}
+                            size="xx-small"></lightning-icon>
+                    </template>
+                </div>
+            </div>
+        </label>
+
+        <div style={tableHeight} class={borderClass} id="datatable">
+            <lightning-datatable data={options} columns={columns} key-field="value" onrowselection={handleRowSelection}
+                selected-rows={vals}>
+            </lightning-datatable>
+        </div>
+    </div>
+</template>

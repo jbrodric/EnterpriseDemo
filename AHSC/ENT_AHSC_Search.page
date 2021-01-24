@@ -1,0 +1,327 @@
+<apex:page Controller="ENT_Ctrl_AHSC_Search" id="thePage" docType="html">
+    <meta name="viewport" content="initial-scale=1.0"/>
+    <meta charset="utf-8"/>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"/>
+    <script src="https://maps.google.com/maps/api/js?libraries=geometry&key={!IF($Organization.Id == '00D30000000n3S7EAI', 'AIzaSyCyghaOIpP92RWasBe_DC2NjZ2Hxh2ELVI', 'AIzaSyBh80IIKwnPo-SPX9DPHUouLIEnDJtt5DQ')}"></script>
+    <apex:includeScript value="{!URLFOR($Resource.GoogleMapSupportFunctions, 'GoogleMapSupportFunctions.js')}" />
+    
+    <style>    
+        #map {
+            font-family: Arial;
+            font-size:12px;
+            line-height:normal !important;
+            height:600px; 
+        }   
+        .text-center { text-align: center; margin-left: auto; margin-right: auto; }    
+        .roundCornerCss{ 
+            /* outer shadows  (note the rgba is red, green, blue, alpha) */
+            -webkit-box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.4); 
+            -moz-box-shadow: 0px 1px 6px rgba(23, 69, 88, .5);
+            
+            /* rounded corners */
+            -webkit-border-radius: 12px;
+            -moz-border-radius: 7px; 
+            border-radius: 7px;
+            
+            /* gradients */
+            background: -webkit-gradient(linear, left top, left bottom, 
+            color-stop(0%, white), color-stop(15%, white), color-stop(100%, #D7E9F5)); 
+            background: -moz-linear-gradient(top, white 0%, white 55%, #D5E4F3 130%); 
+        }
+        .v-align-middle {
+            vertical-align:middle !important;
+        }        
+    </style>
+    
+    <apex:pageblock >
+      
+        <apex:pageBlockSection title="Search Criteria" rendered="false">
+            
+            <apex:form >
+                <table width="100%">
+                    <Tr>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                        <td colspan="2">
+                            <apex:commandButton title="Search" value="Search" action="{!Search}"  />
+                        </td>
+                        <td colspan="2">
+                            <apex:commandButton title="Clear" value="Clear" action="{!ClearSearch}" />
+                        </td>
+                    </tr>
+                    <Tr>
+                        <td>State</td>
+                        <td rowspan="2">
+                            <apex:selectList id="USState"  size="7" value="{!USState}" >
+                                <apex:selectOptions value="{!getUSState}"/>
+                            </apex:selectList> 
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                        <td>Project Types</td>
+                        <td>
+                            <apex:selectList multiselect="true"  id="projecttype"  size="3" value="{!ProjectType}" >
+                                <apex:selectOptions value="{!getProjectTypes}"/>
+                            </apex:selectList>
+                        </td>  
+                    </tr>
+                    <Tr>
+                        <td colspan="4">
+                            &nbsp;
+                        </td>
+                        <td>Capital Uses</td>
+                        <td>
+                             <apex:selectList multiselect="true" id="captialuses"  size="4" value="{!CapitalUses}">
+                                <apex:selectOptions value="{!getCapitalUses}"/>
+                            </apex:selectList>
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <Tr>
+                        <td>Entitled</td>
+                        <td>
+                            <apex:selectList multiselect="true" id="entitled"  size="3" value="{!Entitled}">
+                                <apex:selectOptions value="{!getEntitled}"/>
+                            </apex:selectList>
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                         <td>Application Status</td>
+                        <td>
+                             <apex:selectList multiselect="true" id="applicationstatus"  size="3" value="{!ApplicationStatus }">
+                                <apex:selectOptions value="{!getApplicationStatus}"/>
+                            </apex:selectList>   
+                        </td>
+                    </tr>
+                    <Tr>
+                        <td>Matched</td>
+                        <td>
+                             <apex:selectList multiselect="true" id="matched"  size="2" value="{!Matched}">
+                                <apex:selectOptions value="{!getMatched}"/>
+                            </apex:selectList> 
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    
+                    <Tr>
+                        <td>Approximate Amount of Funding Needed: (from)</td>
+                        <td>
+                             <apex:inputText id="FundingNeededFrom" label="FundingNeededFrom" value="{!FundingNeededFrom}" />    
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                        <td>Approximate Amount of Funding Needed: (to)</td>
+                        <td>
+                             <apex:inputText id="FundingNeededTo" label="FundingNeededTo" value="{!FundingNeededTo}" />    
+                        </td>
+                    </tr>
+                    
+                    
+                    <Tr>
+                        <td>Developer</td>
+                        <td>
+                             <apex:inputText id="Developer" label="Developer" />    
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    <Tr>
+                        <td>Project includes Program Grant Request</td>
+                        <td>
+                             <apex:selectList multiselect="true" id="ProgramGrantRequest"  size="3" value="{!ProgramGrantRequest}">
+                                <apex:selectOptions value="{!getProgramGrantRequest}"/>
+                            </apex:selectList>       
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                        <td colspan="2">
+                            &nbsp;
+                        </td>
+                    </tr>
+                    
+                    
+               </table>
+               
+            </apex:form>
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection id="MapSection" title="Map" html-width="100%" columns="1" >
+            <div class="text-center">
+                <div id="mapContainer">
+                    <div id="Controls" style="margin-bottom:10px;">
+                        <label for="txtBoundarySize">Boundary Size(In Miles):</label>
+                        <input type="text" id="txtBoundarySize" onchange="updateBoundaries();"/>
+                    </div>
+                    <div id="map" class="roundCornerCss">Loading, Please Wait...</div>
+                </div>                    
+                <div id="errMsg" class="text-center" style="display: none; font-size: 1.4em; color: red;"></div>
+            </div>
+        </apex:pageBlockSection>
+        <script type="text/javascript">
+            var map, googleMapHelper, errMsg, boundarySizeInMiles;
+        
+            $(document).ready(function()
+            {
+                var mapDiv = document.getElementById("map");
+                if(mapDiv)
+                {
+                    errMsg = $('#errMsg');
+                    map = new google.maps.Map(mapDiv, 
+                        {
+                          zoom: 6,
+                          scrollwheel: false,
+                          center: new google.maps.LatLng(36.752118, -119.699126),
+                          mapTypeId: google.maps.MapTypeId.ROADMAP
+                        } 
+                    );
+                    googleMapHelper = new enterprise.googlemapsupportfunctions.mapping.GoogleMapHelper(map);
+                    
+                    boundarySizeInMiles = $('#txtBoundarySize');
+                    boundarySizeInMiles.val(googleMapHelper.getBoundarySizeInMiles());
+                    
+                    $.when(getProjects()).done(function(r)
+                    {
+                        if(r != null)
+                        {
+                            //console.log(r);
+                            for(var projectIndex=0; projectIndex<r.length; projectIndex++)
+                            {
+                                try
+                                {
+                                    var location = r[projectIndex];
+                                    var icon = enterprise.googlemapsupportfunctions.mapping.shapes.MarkerIconEnum.GREEN;
+                                    var title =  decodeHTML("Project Name: " + location.AHSC_Project__r.Name + "\n" + 
+                                        "Location Name: " + location.Name + "\n" + 
+                                        "Project Type: " + location.AHSC_Project__r.Project_Type__c + "\n" + 
+                                        "Capital Uses: " + location.AHSC_Project__r.Capital_Uses__c);
+                                        
+                                    if(location.LocationType__c == "Point")
+                                    {                               
+                                        if(!location.GeoCode__c)
+                                            geocodeAddressAndAddPoint(location.Address__c + ' ' + location.City__c + ' ' + location.State__c + 
+                                                ' ' + location.Zip_Code__c, location.Id, title, icon);
+                                        else
+                                            googleMapHelper.addPoint(
+                                                googleMapHelper.createGoogleLatLng(location.GeoCode__c.latitude, location.GeoCode__c.longitude)
+                                                , title, icon, false, true);
+                                    }
+                                    else 
+                                    {
+                                        if(location.AHSC_Project_Geolocations__r)
+                                        {
+                                            var googleLatLngArray = [];
+                                            
+                                            for(var geolocationIndex=0; geolocationIndex<location.AHSC_Project_Geolocations__r.length;geolocationIndex++)
+                                            {
+                                                var geoLoc = location.AHSC_Project_Geolocations__r[geolocationIndex];
+                                                var googleLatLng = googleMapHelper.createGoogleLatLng(geoLoc.Coordinates__c.latitude, geoLoc.Coordinates__c.longitude);
+                                                googleLatLngArray.push(googleLatLng);
+                                            }
+                                            
+                                            if(location.LocationType__c == "Line")
+                                                googleMapHelper.addPolyline(googleLatLngArray, title, icon, false, true);
+                                            else if(location.LocationType__c == "Area")
+                                                googleMapHelper.addPolygon(googleLatLngArray, title, icon, false, true);
+                                        }
+                                    }
+                                }
+                                catch(e)
+                                {
+                                    errMsg.append('<div>' + e + '</div>');
+                                    errMsg.show();                                                 
+                                }
+                            }
+                            googleMapHelper.fitBounds();
+                        }
+                    });
+                }
+            });
+                        
+            function decodeHTML(html)
+            {
+                var txt = document.createElement("textarea");
+                txt.innerHTML = html;
+                return txt.value;
+            }
+            
+            function geocodeAddressAndAddPoint(address, projectLocationId, pointTitle, pointIcon)
+            {
+                $.when(googleMapHelper.geocodeAddress(address))
+                    .done(function(googleLatLng)
+                    {
+                        googleMapHelper.addPoint(googleLatLng, pointTitle, pointIcon, false, true);
+                        googleMapHelper.fitBounds();
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ENT_Ctrl_AHSC_Search.UpdateProjectGeolocation}',
+                            projectLocationId, googleLatLng.lat(), googleLatLng.lng(),
+                            function(result, event)
+                            {
+                                if(result != null && result != '')
+                                {
+                                    errMsg.append('<div>Error saving geolocation: ' + result + '</div>');
+                                    errMsg.show();
+                                }
+                            }, 
+                            {escape: true, buffered: false}
+                        );
+                    })
+                    .fail(function(error, address)
+                    {
+                        errMsg.append('<div>Geocoding Error Encountered for "' + address + 
+                            '"<br/>&nbsp;&nbsp;Error Message: ' + error.errMsg + '</div>');
+                        errMsg.show();                                              
+                    });
+            }
+            
+            function updateBoundaries()
+            {
+                googleMapHelper.updateVisibleShapeBoundarySizes(boundarySizeInMiles.val());
+            }
+            
+            function getProjects()
+            {
+                var dfd = jQuery.Deferred();
+                
+                Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ENT_Ctrl_AHSC_Search.GetAllLocations}',
+                    function(result, event)
+                    {
+                        if (event.status)
+                        {
+                            dfd.resolve(result);
+                        }
+                        else if (event.type === 'exception')
+                        {
+                            $('#mapContainer').hide();
+                            errMsg.append('<div>' + event.message + ' / ' + event.where + '</div>');
+                            errMsg.show();
+                            
+                            dfd.resolve(null);
+                        }
+                        else
+                        {
+                            $('#mapContainer').hide();
+                            errMsg.append('<div>' + event.message + '</div>');
+                            errMsg.show();
+                            dfd.resolve(null);
+                        }
+                    }, 
+                    {escape: true, buffered: false}
+                );
+                
+                return dfd.promise();
+            }
+        </script>
+    </apex:pageblock>
+</apex:page>

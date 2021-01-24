@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>multiSelPicklistDatatable</masterLabel>
+    <description>This component allows the user to display a multi select picklist input in a datatable format</description>
+    <apiVersion>51.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="tableLabel" label="Table Label" type="String" role="inputOnly" description="Label to display on the Table Header"/>
+            <property name="objectName" label="Object API Name" type="String" role="inputOnly" required="true" description="API Name of Object where Picklist is stored"/>
+            <property name="fieldName" label="Field API Name" type="String" role="inputOnly" required="true" description="API Name of Picklist field"/>
+            <property name="recordID" label="Record ID" type="String" role="inputOnly" description="Specify a record ID of type 'Object API Name' to preselect values in picklist from data in record"/>
+            <property name="recordTypeId" label="Record Type ID" type="String" role="inputOnly" description="Record Type ID used to filter picvals.  Leave blank for default RT ID"/>
+            <property name="selectedValues" label="Selected Values" type="String" role="outputOnly" description="String containing semi-colon delimited output denoting the  picklist values the user selected"/>
+            <property name="isRequired" label="Required Field" type="Boolean" role="inputOnly" description="Default false.  Set to true to make this a required field."/>
+            <property name="tableIcon" label="Table Icon" type="String" role="inputOnly" description="(Optional) Icon to display on the Table Header. Example: standard:account"/>
+            <property name="showInlineHelpText" label="Show Inline Help Text" type="Boolean" role="inputOnly" default="false" description="Set to True if you want inline help text to display"/>
+            <property name="tableHeight" label="Table Height" type="String" role="inputOnly" description="CSS specification for the height of the datatable (Examples: 30rem, calc(50vh - 100px)  If you leave this blank, the datatable will expand to display all records.)"/>
+            <property name="tableBorder" label="Table Border" type="Boolean" default="true" role="inputOnly" description="Display a border around the datatable."/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
